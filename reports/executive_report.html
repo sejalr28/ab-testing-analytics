@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experiment Readout — Progress Gate Placement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F7F8FA;
+    --card: #FFFFFF;
+    --ink: #14213D;
+    --muted: #5B6478;
+    --accent: #0E7C7B;
+    --accent-soft: #E4F1F0;
+    --negative: #B23A48;
+    --negative-soft: #FBEAEC;
+    --positive: #3A7D44;
+    --line: #D8DCE3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 64px 32px 96px;
+  }
+
+  /* ---------- Header ---------- */
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 40px;
+  }
+  .masthead .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .masthead h1 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 34px;
+    letter-spacing: -0.01em;
+  }
+  .masthead .meta {
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  /* ---------- Verdict stamp ---------- */
+  .verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 2.5px solid var(--negative);
+    color: var(--negative);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border-radius: 3px;
+    transform: rotate(-1.2deg);
+    margin: 4px 0 40px;
+  }
+  .verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--negative); }
+
+  /* ---------- Sections ---------- */
+  section { margin-bottom: 44px; }
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+    padding-top: 8px;
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 21px;
+    margin-bottom: 14px;
+  }
+  p { color: var(--ink); margin-bottom: 12px; max-width: 68ch; }
+  p.lede { font-size: 17px; color: var(--muted); max-width: 62ch; }
+  strong { font-weight: 600; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* ---------- Metric grid ---------- */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 24px;
+  }
+  .metric {
+    background: var(--card);
+    padding: 20px 18px;
+  }
+  .metric .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .metric .value {
+    font-family: 'Source Serif 4', serif;
+    font-size: 30px;
+    font-weight: 600;
+  }
+  .metric .delta { font-family: 'IBM Plex Mono', monospace; font-size: 13px; margin-top: 4px; }
+  .delta.down { color: var(--negative); }
+  .delta.flat { color: var(--muted); }
+
+  /* ---------- Bar comparison ---------- */
+  .compare { margin: 22px 0 8px; }
+  .bar-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .bar-row .tag {
+    width: 130px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .bar-track { flex: 1; background: var(--paper); border: 1px solid var(--line); height: 26px; position: relative; }
+  .bar-fill { height: 100%; background: var(--accent); }
+  .bar-row.treatment .bar-fill { background: var(--negative); }
+  .bar-row .pct {
+    width: 64px;
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* ---------- Checklist ---------- */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-top: 1px solid var(--line);
+  }
+  .checklist li:last-child { border-bottom: 1px solid var(--line); }
+  .checklist .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    padding-top: 2px;
+    flex-shrink: 0;
+    width: 24px;
+  }
+  .checklist .body h3 {
+    font-size: 14.5px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .checklist .body p { font-size: 14px; color: var(--muted); margin-bottom: 0; }
+  .status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 3px;
+    height: fit-content;
+    white-space: nowrap;
+  }
+  .status.pass { background: var(--accent-soft); color: var(--accent); }
+  .status.watch { background: #FDF3E3; color: #96660C; }
+
+  /* ---------- Callout ---------- */
+  .callout {
+    background: var(--card);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+  .callout p { font-size: 14.5px; margin-bottom: 0; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    border-top: 2px solid var(--ink);
+    padding-top: 20px;
+    margin-top: 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 640px) {
+    .metric-grid { grid-template-columns: 1fr; }
+    .masthead { flex-direction: column; align-items: flex-start; gap: 14px; }
+    .masthead .meta { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div>
+      <div class="eyebrow">Experiment Readout</div>
+      <h1>Progress Gate Placement</h1>
+    </div>
+    <div class="meta">
+      Cookie Cats · Mobile Game<br>
+      n = 90,189 players<br>
+      Gate 30 (control) vs. Gate 40 (treatment)
+    </div>
+  </div>
+
+  <div class="verdict"><span class="dot"></span>Recommendation: do not ship</div>
+
+  <p class="lede">Moving the first progress gate from level 30 to level 40 was hypothesized to improve retention by keeping players in the core loop longer before friction. The data shows the opposite: Day&#8209;7 retention drops significantly, with no offsetting engagement gain.</p>
+
+  <section>
+    <div class="section-label">Primary Result</div>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="label">D7 Retention — Control</div>
+        <div class="value">19.02%</div>
+      </div>
+      <div class="metric">
+        <div class="label">D7 Retention — Treatment</div>
+        <div class="value">18.20%</div>
+        <div class="delta down">&minus;0.82 pp</div>
+      </div>
+      <div class="metric">
+        <div class="label">Significance</div>
+        <div class="value">p = 0.0016</div>
+        <div class="delta flat">95% CI [&minus;1.33, &minus;0.31] pp</div>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="bar-row control">
+        <div class="tag">gate_30 (control)</div>
+        <div class="bar-track"><div class="bar-fill" style="width: 19.02%;"></div></div>
+        <div class="pct">19.02%</div>
+      </div>
+      <div class="bar-row treatment">
+        <div class="tag">gate_40 (treatment)</div>
+        <div class="bar-track"><div class="bar-fill" style="width: 18.20%;"></div></div>
+        <div class="pct">18.20%</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-label">Secondary &amp; Guardrail Metrics</div>
+    <h2>The drop is real, and it isn't costing engagement</h2>
+    <p>Day&#8209;1 retention moved the same direction (44.82% &rarr; 44.23%) but didn't clear the multiple&#8209;comparison&#8209;adjusted significance bar &mdash; this is a longer&#8209;horizon retention story, not a first&#8209;impression one. Engagement (median game rounds played) was statistically unchanged between arms (17 vs. 16), confirmed after excluding extreme outlier accounts &mdash; so the retention loss in the treatment group isn't offset by a corresponding engagement gain.</p>
+  </section>
+
+  <section>
+    <div class="section-label">Methodology &amp; Rigor</div>
+    <h2>Pre-registered analysis plan</h2>
+    <ul class="checklist">
+      <li>
+        <div class="num">01</div>
+        <div class="body">
+          <h3>Sample Ratio Mismatch check</h3>
+          <p>Verified assignment balance before trusting any downstream result &mdash; 44,700 / 45,489 split, p = 0.0086, passes the strict experimentation&#8209;platform threshold (p &lt; 0.001).</p>
+        </div>
+        <span class="status pass">Pass</span>
+      </li>
+      <li>
+        <div class="num">02</div>
+        <div class="body">
+          <h3>Two-proportion z-test, Wilson confidence interval</h3>
+          <p>Primary metric (D7 retention) tested with a proper CI on the difference, not a p-value alone.</p>
+        </div>
+        <span class="status pass">Complete</span>
+      </li>
+      <li>
+        <div class="num">03</div>
+        <div class="body">
+          <h3>Bonferroni correction</h3>
+          <p>Adjusted significance threshold (&alpha;/3 = 0.0167) applied across the three metrics tested on this dataset.</p>
+        </div>
+        <span class="status pass">Applied</span>
+      </li>
+      <li>
+        <div class="num">04</div>
+        <div class="body">
+          <h3>Mann&ndash;Whitney U test for the guardrail metric</h3>
+          <p>Used instead of a t-test &mdash; engagement counts are heavily right&#8209;skewed with extreme outliers, violating the normality assumption a t-test needs.</p>
+        </div>
+        <span class="status pass">Complete</span>
+      </li>
+      <li>
+        <div class="num">05</div>
+        <div class="body">
+          <h3>Post-hoc power check</h3>
+          <p>At the achieved sample size, the test could detect effects as small as 0.74pp at 80% power &mdash; smaller than the pre-registered 1.0pp MDE, confirming the null results aren't just underpowered noise.</p>
+        </div>
+        <span class="status pass">Complete</span>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-label">Caveats</div>
+    <div class="callout">
+      <p>The observed effect (0.82pp) is statistically significant but sits under the pre-registered minimum effect size (1.0pp) that was decided in advance to be worth acting on &mdash; a genuine but modest signal, not overstated here. The minor sample imbalance (p = 0.0086 on the SRM check) is within accepted tolerance but has been flagged to the team owning randomization.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Full methodology: experiment_design.md · notebooks/01_eda_and_experiment_analysis.ipynb</span>
+    <span class="mono">A/B Testing &amp; Experimentation Analytics</span>
+  </footer>
+
+</div>
+</body>
+</html>
